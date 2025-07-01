@@ -13,7 +13,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
-//@Primary
+@Primary
 @Service("fakeStoreProductService")
 public class FakeStoreProductService implements ProductService{
 
@@ -120,18 +120,61 @@ public class FakeStoreProductService implements ProductService{
 
     @Override
     public Product updateProduct(Long productId, Product product) {
-        return null;
+        FakeStoreProductDto fakeStoreProductDto = new FakeStoreProductDto();
+        fakeStoreProductDto.setTitle(product.getTitle());
+        fakeStoreProductDto.setPrice(product.getPrice());
+        fakeStoreProductDto.setDescription(product.getDescription());
+        fakeStoreProductDto.setImage(product.getImageUrl());
+        fakeStoreProductDto.setCategory(product.getCategory().getName());
+
+        try {
+            FakeStoreProductDto responseDto = restTemplate.exchange(
+                    "https://fakestoreapi.com/products/" + productId,
+                    org.springframework.http.HttpMethod.PATCH,
+                    new org.springframework.http.HttpEntity<>(fakeStoreProductDto),
+                    FakeStoreProductDto.class
+            ).getBody();
+
+            if (responseDto == null) {
+                throw new RuntimeException("Failed to update product with id: " + productId);
+            }
+
+            Product updatedProduct = convertFakeStoreProductDtoToProduct(responseDto);
+            redisTemplate.opsForHash().put("PRODUCTS", "PRODUCT_" + productId, updatedProduct);
+            return updatedProduct;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update product with id: " + productId);
+        }
     }
 
     @Override
     public Product createProduct(Product product) {
-        return null;
+        FakeStoreProductDto fakeStoreProductDto = new FakeStoreProductDto();
+        fakeStoreProductDto.setTitle(product.getTitle());
+        fakeStoreProductDto.setPrice(product.getPrice());
+        fakeStoreProductDto.setDescription(product.getDescription());
+        fakeStoreProductDto.setImage(product.getImageUrl());
+        fakeStoreProductDto.setCategory(product.getCategory().getName());
+
+        try {
+            FakeStoreProductDto responseDto = restTemplate.postForObject(
+                    "https://fakestoreapi.com/products",
+                    fakeStoreProductDto,
+                    FakeStoreProductDto.class
+            );
+
+            if (responseDto == null) {
+                throw new RuntimeException("Failed to create product");
+            }
+
+            Product createdProduct = convertFakeStoreProductDtoToProduct(responseDto);
+            redisTemplate.opsForHash().put("PRODUCTS", "PRODUCT_" + createdProduct.getId(), createdProduct);
+            return createdProduct;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create product: " + e.getMessage());
+        }
     }
 
-    @Override
-    public List<Product> getAllProducts() {
-        return List.of();
-    }
 
 
 }

@@ -60,8 +60,8 @@ public class ProductController {
     }
 
     @PatchMapping("/{id}")
-    public Product updateProduct(@PathVariable("id") Long productId,@RequestBody Product product){
-        return null;
+    public Product updateProduct(@PathVariable("id") Long productId, @RequestBody Product product) throws ProductNotFoundException {
+        return productService.updateProduct(productId, product);
     }
 
     @PutMapping("/{id}")

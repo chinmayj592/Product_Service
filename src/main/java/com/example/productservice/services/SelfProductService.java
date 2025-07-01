@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.antlr.v4.runtime.tree.xpath.XPath.findAll;
-
-@Primary
+//
+//@Primary
 @Service("selfProductService")
 
 public  class SelfProductService implements ProductService {
@@ -72,10 +72,6 @@ public  class SelfProductService implements ProductService {
 
     }
 
-    @Override
-    public List<Product> getAllProducts() {
-        return List.of();
-    }
 
 
     @Override
@@ -117,8 +113,25 @@ public  class SelfProductService implements ProductService {
     }
 
     @Override
-    public Product updateProduct(Long productId, Product product) {
-        return null;
+    public Product updateProduct(Long productId, Product product) throws ProductNotFoundException {
+        Optional<Product> optionalProduct = productRepository.findById(productId);
+        if (optionalProduct.isEmpty()) {
+            throw new ProductNotFoundException("Product with id: " + productId + " doesn't exist");
+        }
+
+        Product existingProduct = optionalProduct.get();
+        existingProduct.setTitle(product.getTitle());
+        existingProduct.setDescription(product.getDescription());
+        existingProduct.setPrice(product.getPrice());
+        existingProduct.setImageUrl(product.getImageUrl());
+
+        Category category = product.getCategory();
+        if (category != null && category.getId() != null) {
+            // If the category exists, set it
+            existingProduct.setCategory(category);
+        }
+
+        return productRepository.save(existingProduct);
     }
 
 
